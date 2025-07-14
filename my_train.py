@@ -182,8 +182,8 @@ dataset = Dataset.from_list(data_list)
 # Training configuration
 training_args = GRPOConfig(
     output_dir="results/OrderFair-GRPO-squad",
-    per_device_train_batch_size=1,  # 每个device处理2个groups
-    gradient_accumulation_steps=8,  # 减少梯度累积步数
+    per_device_train_batch_size=1, 
+    gradient_accumulation_steps=8, 
     bf16=True,
     logging_steps=10,
     num_train_epochs=3.0,
@@ -195,6 +195,8 @@ training_args = GRPOConfig(
     gradient_checkpointing=False,
     steps_per_generation=1,  # 设置为1，每步都生成新的completions
     num_iterations=1,
+    max_completion_length=128,
+    max_prompt_length=None,
 )
 
 # Create trainer with alpha parameter for advantage mixing
@@ -204,6 +206,8 @@ trainer = GRPOTrainer(
     train_dataset=dataset,
     processing_class=tokenizer,  # Use processing_class instead of tokenizer
     alpha=0.5,  # Weight for combining group and individual advantages
+    task='squad',
+
 )
 
 print("Starting training...")

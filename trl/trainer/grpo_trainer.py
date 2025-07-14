@@ -342,6 +342,7 @@ class GRPOTrainer(Trainer):
         optimizers: tuple[Optional[torch.optim.Optimizer], Optional[torch.optim.lr_scheduler.LambdaLR]] = (None, None),
         peft_config: Optional["PeftConfig"] = None,
         alpha: float = 0.5,  # New parameter for advantage mixing
+        task: str = "squad",
     ):
         # Args
         if args is None:
