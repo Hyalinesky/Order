@@ -655,8 +655,8 @@ class GRPOTrainer(Trainer):
         """
         import re
         
-        if self.task in ['squad', 'searchqa']:
-            # For SQuAD and SearchQA tasks: check if answer appears in completion (case-insensitive)
+        if self.task == 'squad':
+            # For SQuAD task: check if answer appears in completion (case-insensitive)
             completion_lower = completion.lower().strip()
             answer_lower = answer.lower().strip()
             
@@ -666,8 +666,8 @@ class GRPOTrainer(Trainer):
             else:
                 return 0.0
                 
-        elif self.task in ['CM17k', 'gsm8k']:
-            # For CM17k and GSM8k tasks: extract and compare values after '#### '
+        elif self.task == 'gsm':
+            # For GSM task: extract and compare values after '#### '
             def extract_final_answer(text):
                 """Extract the final answer after '#### ' marker"""
                 # Find '#### ' in the text
@@ -689,32 +689,6 @@ class GRPOTrainer(Trainer):
                     return 1.0
             
             return 0.0
-        
-        elif self.task == 'sst2':
-            # For SST2 task: extract first occurrence of 'positive' or 'negative'
-            completion_lower = completion.lower()
-            
-            # Find first occurrence of positive or negative
-            positive_match = re.search(r'\bpositive\b', completion_lower)
-            negative_match = re.search(r'\bnegative\b', completion_lower)
-            
-            # Determine which appears first
-            completion_sentiment = None
-            if positive_match and negative_match:
-                if positive_match.start() < negative_match.start():
-                    completion_sentiment = 'positive'
-                else:
-                    completion_sentiment = 'negative'
-            elif positive_match:
-                completion_sentiment = 'positive'
-            elif negative_match:
-                completion_sentiment = 'negative'
-            
-            # Compare with ground truth answer
-            if completion_sentiment and completion_sentiment == answer.lower().strip():
-                return 1.0
-            else:
-                return 0.0
         
         else:
             # Default behavior for unknown tasks (fallback to original logic)

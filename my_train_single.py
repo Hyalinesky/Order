@@ -5,13 +5,8 @@ import json
 import torch
 
 # Load tokenizer
-model_name = "../LLaMA-Factory/saves/llama3/squad-1"
+model_name = "../models/squad_1k/checkpoints"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
-# Load the dataset with token length constraints
-file_path = "data/order2/squad/train_8_1000_new.jsonl"
-num_orders = 8
-max_prompt_tokens = 512
-max_total_tokens = 128 + 512
 
 def load_order_fair_data(file_path, num_orders=8, max_prompt_tokens=2048, max_total_tokens=3072):
     """
@@ -70,15 +65,15 @@ def load_order_fair_data(file_path, num_orders=8, max_prompt_tokens=2048, max_to
             )
             total_tokens = len(tokenizer.encode(conversation_text, add_special_tokens=True))
             
-            # # Check if prompt exceeds max_prompt_tokens or total exceeds max_total_tokens
-            # if prompt_tokens > max_prompt_tokens:
-            #     print(f"Skipping group {i//num_orders + 1}: Prompt too long ({prompt_tokens} > {max_prompt_tokens} tokens)")
-            #     skip_group = True
-            #     break
-            # elif total_tokens > max_total_tokens:
-            #     print(f"Skipping group {i//num_orders + 1}: Total conversation too long ({total_tokens} > {max_total_tokens} tokens)")
-            #     skip_group = True
-            #     break
+            # Check if prompt exceeds max_prompt_tokens or total exceeds max_total_tokens
+            if prompt_tokens > max_prompt_tokens:
+                print(f"Skipping group {i//num_orders + 1}: Prompt too long ({prompt_tokens} > {max_prompt_tokens} tokens)")
+                skip_group = True
+                break
+            elif total_tokens > max_total_tokens:
+                print(f"Skipping group {i//num_orders + 1}: Total conversation too long ({total_tokens} > {max_total_tokens} tokens)")
+                skip_group = True
+                break
         
         if skip_group:
             skipped_groups += 1
@@ -164,7 +159,11 @@ def validate_data_consistency(data_list, num_orders=8):
         for msg in sample['prompt_variants'][1]:
             print(f"  {msg['role']}: {msg['content'][:100]}...")
 
-
+# Load the dataset with token length constraints
+file_path = "data/squad_v2/train_8_1000.jsonl"
+num_orders = 8
+max_prompt_tokens = 2048
+max_total_tokens = 4096
 
 print("Loading and processing data...")
 data_list = load_order_fair_data(
@@ -182,17 +181,17 @@ dataset = Dataset.from_list(data_list)
 
 # Training configuration
 training_args = GRPOConfig(
-    output_dir="results/llama/GRPO-squad-v1",
-    per_device_train_batch_size=2, 
-    gradient_accumulation_steps=8,
+    output_dir="results/OrderFair-GRPO-squad",
+    per_device_train_batch_size=1, 
+    gradient_accumulation_steps=8, 
     bf16=True,
     logging_steps=10,
     num_train_epochs=3.0,
     beta=0.05,
     num_orders=8,
     save_steps=250,
-    temperature=1.0,
-    top_p=1.0,
+    temperature=0.5,
+    top_p=0.5,
     gradient_checkpointing=False,
     steps_per_generation=1,  # 设置为1，每步都生成新的completions
     num_iterations=1,
